@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ChefHat, Heart, ListChecks, Sparkles } from "lucide-react"
+import { Heart, ListChecks, Sparkles } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import type {
@@ -9,28 +9,22 @@ import type {
   UpdateIngredientFormValues,
 } from "@/app/schemas/inventory/ingredient-schema"
 import {
-  generateMockRecipe,
-  initialIngredients,
-  initialRecipes,
-  type Ingredient,
-  type Recipe,
-} from "@/lib/recipes"
-import {
   addIngredient,
   listIngredients,
   removeIngredient,
   updateIngredient,
 } from "@/server/ingredients/actions"
+import { deleteReceta, listRecetas } from "@/server/recetas/actions"
+import type { Ingredient, Receta } from "@/server/types"
 import { toast } from "@/components/ui/toast"
 import { PantryTab } from "./pantry-tab"
 import { RecipeGrid } from "./recipe-grid"
 
 export function Dashboard() {
   const [tab, setTab] = useState<string>("pantry")
-  const [ingredients, setIngredients] =
-    useState<Ingredient[]>(initialIngredients)
-  const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes)
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
+  const [recipes, setRecipes] = useState<Receta[]>([])
+  const [isCargandoRecetas, setIsCargandoRecetas] = useState(true)
 
   useEffect(() => {
     async function cargarIngredientes() {
@@ -48,6 +42,26 @@ export function Dashboard() {
       }
     }
     void cargarIngredientes()
+  }, [])
+
+  useEffect(() => {
+    async function cargarRecetas() {
+      try {
+        const data = await listRecetas()
+        setRecipes(data)
+      } catch (error) {
+        toast.add({
+          type: "error",
+          description:
+            error instanceof Error
+              ? error.message
+              : "No se pudieron cargar las recetas",
+        })
+      } finally {
+        setIsCargandoRecetas(false)
+      }
+    }
+    void cargarRecetas()
   }, [])
 
   async function handleCreate(values: AddIngredientFormValues) {
@@ -99,47 +113,37 @@ export function Dashboard() {
   }
 
 // ----------------- Recipes
-  const favorites = recipes.filter((r) => r.favorite)
+// Pendiente: el backend aún no expone «favorito»; la pestaña se mantiene vacía mientras tanto.
+const favorites: Receta[] = []
 
-  async function handleGenerate(selected: Ingredient[]) {
-    if (selected.length === 0) return
-    setIsGenerating(true)
-    try {
-      const recipe = await generateMockRecipe(selected)
-      setRecipes((prev) => [recipe, ...prev])
-      toast.add({ type: "success", description: "Receta generada" })
-      setTab("recipes")
-    } finally {
-      setIsGenerating(false)
-    }
-  }
+// Pendiente: conectar con el endpoint de generación (LLM) del backend cuando exista.
+function handleGenerate() {
+  // La habilitación (requiere ingredientes seleccionados) vive en PantryTab.
+}
 
-  function toggleFavorite(id: string) {
-    const recipe = recipes.find((r) => r.id === id)
-    setRecipes((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, favorite: !r.favorite } : r))
-    )
-    if (recipe) {
-      toast.add({
-        type: recipe.favorite ? "info" : "success",
-        description: recipe.favorite
-          ? "Receta eliminada de favoritos"
-          : "Receta guardada en favoritos",
-      })
-    }
-  }
+function toggleFavorite() {
+  // Sin efecto hasta que el backend exponga el campo «favorito».
+}
 
-  function deleteRecipe(id: string) {
+async function deleteRecipe(id: string) {
+  try {
+    await deleteReceta(id)
     setRecipes((prev) => prev.filter((r) => r.id !== id))
     toast.add({ type: "success", description: "Receta eliminada" })
+  } catch (error) {
+    toast.add({
+      type: "error",
+      description:
+        error instanceof Error
+          ? error.message
+          : "No se pudo eliminar la receta",
+    })
   }
+}
 
-  function removeFavorite(id: string) {
-    setRecipes((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, favorite: false } : r))
-    )
-    toast.add({ type: "info", description: "Receta eliminada de favoritos" })
-  }
+function removeFavorite() {
+  // Sin efecto hasta que el backend exponga el campo «favorito».
+}
 
   return (
     <div className="min-h-dvh bg-[#f6fffc]">
@@ -200,13 +204,14 @@ export function Dashboard() {
               onUpdate={handleUpdate}
               onDelete={handleDelete}
               onGenerate={handleGenerate}
-              isGenerating={isGenerating}
+              isGenerating={false}
             />
           </TabsContent>
 
           <TabsContent value="recipes">
             <RecipeGrid
               recipes={recipes}
+              isLoading={isCargandoRecetas}
               onToggleFavorite={toggleFavorite}
               onDelete={deleteRecipe}
               deleteLabel="Eliminar receta"
@@ -219,6 +224,7 @@ export function Dashboard() {
           <TabsContent value="favorites">
             <RecipeGrid
               recipes={favorites}
+              isLoading={isCargandoRecetas}
               onToggleFavorite={toggleFavorite}
               onDelete={removeFavorite}
               deleteLabel="Eliminar de favoritos"

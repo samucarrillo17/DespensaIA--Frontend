@@ -1,6 +1,6 @@
 "use client"
 
-import { ChefHat, Clock, Eye, Heart, Trash2, Users } from "lucide-react"
+import { ChefHat, Clock, Eye, Heart, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -24,10 +24,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
-import type { Recipe } from "@/lib/recipes"
+import type { Receta } from "@/server/types"
+import {
+  DIFICULTAD_ETIQUETAS,
+  formatIngredienteReceta,
+} from "./recipe-format"
 
 type RecipeCardProps = {
-  recipe: Recipe
+  recipe: Receta
   onView: () => void
   onToggleFavorite: () => void
   onDelete: () => void
@@ -45,14 +49,17 @@ export function RecipeCard({
   deleteDescription,
   hideFavoriteToggle,
 }: RecipeCardProps) {
+  // Pendiente: el backend aún no expone «favorito»; el corazón se muestra inactivo hasta entonces.
+  const favorite = false
+
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <CardTitle className="leading-snug text-pretty">
-          {recipe.title}
+          {recipe.nombre}
         </CardTitle>
         <CardDescription className="line-clamp-2">
-          {recipe.description}
+          {recipe.descripcion}
         </CardDescription>
         {!hideFavoriteToggle && (
           <CardAction>
@@ -60,19 +67,15 @@ export function RecipeCard({
               variant="ghost"
               size="icon-sm"
               onClick={onToggleFavorite}
-              aria-pressed={recipe.favorite}
-              className={cn(
-                recipe.favorite && "text-primary hover:text-primary"
-              )}
+              aria-pressed={favorite}
+              className={cn(favorite && "text-primary hover:text-primary")}
             >
               <Heart
-                className={cn(recipe.favorite && "fill-current")}
+                className={cn(favorite && "fill-current")}
                 aria-hidden="true"
               />
               <span className="sr-only">
-                {recipe.favorite
-                  ? "Quitar de favoritos"
-                  : "Guardar en favoritos"}
+                {favorite ? "Quitar de favoritos" : "Guardar en favoritos"}
               </span>
             </Button>
           </CardAction>
@@ -82,26 +85,22 @@ export function RecipeCard({
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="size-3.5" aria-hidden="true" />
-            {recipe.minutes} min
-          </span>
-          <span className="flex items-center gap-1">
-            <Users className="size-3.5" aria-hidden="true" />
-            {recipe.servings} raciones
+            {recipe.minutos} min
           </span>
           <span className="flex items-center gap-1">
             <ChefHat className="size-3.5" aria-hidden="true" />
-            {recipe.difficulty}
+            {DIFICULTAD_ETIQUETAS[recipe.dificultad]}
           </span>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {recipe.ingredients.slice(0, 4).map((item) => (
-            <Badge key={item} variant="secondary" className="font-normal">
-              {item}
+          {recipe.ingredientes.slice(0, 4).map((item, index) => (
+            <Badge key={index} variant="secondary" className="font-normal">
+              {formatIngredienteReceta(item)}
             </Badge>
           ))}
-          {recipe.ingredients.length > 4 && (
+          {recipe.ingredientes.length > 4 && (
             <Badge variant="outline" className="font-normal">
-              +{recipe.ingredients.length - 4}
+              +{recipe.ingredientes.length - 4}
             </Badge>
           )}
         </div>
@@ -129,7 +128,7 @@ export function RecipeCard({
               <AlertDialogTitle>{deleteLabel}</AlertDialogTitle>
               <AlertDialogDescription>
                 {"«"}
-                {recipe.title}
+                {recipe.nombre}
                 {"». "}
                 {deleteDescription}
               </AlertDialogDescription>

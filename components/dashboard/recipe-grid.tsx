@@ -9,12 +9,13 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import type { Recipe } from "@/lib/recipes"
+import type { Receta } from "@/server/types"
 import { RecipeCard } from "./recipe-card"
 import { RecipeDetailDialog } from "./recipe-detail-dialog"
 
 type RecipeGridProps = {
-  recipes: Recipe[]
+  recipes: Receta[]
+  isLoading?: boolean
   onToggleFavorite: (id: string) => void
   onDelete: (id: string) => void
   deleteLabel: string
@@ -26,6 +27,7 @@ type RecipeGridProps = {
 
 export function RecipeGrid({
   recipes,
+  isLoading = false,
   onToggleFavorite,
   onDelete,
   deleteLabel,
@@ -36,6 +38,10 @@ export function RecipeGrid({
 }: RecipeGridProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = recipes.find((r) => r.id === selectedId) ?? null
+
+  if (isLoading) {
+    return null
+  }
 
   if (recipes.length === 0) {
     return (

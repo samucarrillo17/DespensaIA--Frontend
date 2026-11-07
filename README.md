@@ -69,7 +69,7 @@ El código fuente se organiza siguiendo el patrón del App Router de Next.js, ce
 - Toda interacción con la base de datos o simulación de backend debe procesarse en `server/<tabla>/actions.ts`.
 - **Estructura por Tabla BD:**
   - `server/ingredients/actions.ts`: CRUD de ingredientes del inventario.
-  - `server/recipes/actions.ts`: Generación con LLM, almacenamiento y borrado de recetas.
+  - `server/recetas/actions.ts`: Generación con LLM, almacenamiento y borrado de recetas.
   - `server/ratings/actions.ts`: Calificación y retroalimentación de recetas.
   - `server/users/actions.ts`: Gestión de perfil/usuario.
 - Todos los métodos exportados en estas carpetas deben llevar la directiva `'use server'` al inicio de la función o del archivo.
@@ -78,7 +78,7 @@ El código fuente se organiza siguiendo el patrón del App Router de Next.js, ce
 
 ## 🚀 Requisitos de Integración Backend & LLM
 
-- **LLM Integration:** Los Server Actions en `server/recipes/actions.ts` se conectan con el modelo de lenguaje (OpenAI, Groq, Ollama, etc.) enviando la lista de ingredientes activos para construir el prompt y estructurar la receta generada.
+- **LLM Integration:** Los Server Actions en `server/recetas/actions.ts` se conectan con el modelo de lenguaje (OpenAI, Groq, Ollama, etc.) enviando la lista de ingredientes activos para construir el prompt y estructurar la receta generada.
 - **Persistencia:** Almacenamiento directo o simulado de recetas y calificaciones en la base de datos configurada.
 
 ---

@@ -6,21 +6,30 @@ export type Ingredient = {
   unidad: string
 }
 
-export type RecipeDifficulty = "Fácil" | "Media" | "Difícil"
+export type RecipeDifficulty = "facil" | "media" | "dificil"
 
-export type Recipe = {
-  id: string
-  /** Etiqueta superior de la tarjeta, ej: "Sugerencia principal de la IA". */
-  tagline: string
-  title: string
-  description: string
-  cookTimeMin: number
-  calories: number
-  difficulty: RecipeDifficulty
-  /** Ingredientes que usa y ya están en la despensa. */
-  usedIngredients: string[]
-  /** Ingredientes que faltan (compras extra). */
-  missingIngredients: string[]
-  steps: string[]
-  isSaved: boolean
+export type IngredienteReceta = {
+  ingrediente: string
+  cantidad: number
+  /** Unidad de medida, ej: "g", "ml", "unds", "dientes", "cucharadas", "pizca". */
+  unidad: string
 }
+
+export type Receta = {
+  /** UUID v4. */
+  id: string
+  nombre: string
+  descripcion: string
+  ingredientes: IngredienteReceta[]
+  /** Pasos ordenados → render directo en <li>. */
+  pasos: string[]
+  minutos: number
+  dificultad: RecipeDifficulty
+  /** ISO 8601. */
+  createdAt: string
+  /** Opcional: el backend no lo retorna en POST/PATCH. */
+  deletedAt?: string | null
+}
+
+export type CreateRecetaDto = Omit<Receta, "id" | "createdAt" | "deletedAt">
+export type UpdateRecetaDto = Partial<CreateRecetaDto>
