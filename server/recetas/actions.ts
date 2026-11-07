@@ -4,6 +4,7 @@
 
 import { isAxiosError } from "axios"
 import { apiClient } from "@/server/lib/api-client"
+import { getAuthHeader } from "@/server/lib/auth"
 import type {
   CreateRecetaDto,
   Receta,
@@ -59,7 +60,9 @@ export async function createReceta(
   dto: CreateRecetaDto
 ): Promise<Receta> {
   try {
-    const { data } = await apiClient.post<Receta>(RESOURCE_PATH, dto)
+    const { data } = await apiClient.post<Receta>(RESOURCE_PATH, dto, {
+      headers: await getAuthHeader(),
+    })
     return data
   } catch (error) {
     throw toReadableError(error)
@@ -76,6 +79,7 @@ export async function listRecetas(
         limit: clampLimit(limit),
         offset: clampOffset(offset),
       },
+      headers: await getAuthHeader(),
     })
     return data
   } catch (error) {
@@ -85,7 +89,9 @@ export async function listRecetas(
 
 export async function getReceta(id: string): Promise<Receta> {
   try {
-    const { data } = await apiClient.get<Receta>(`${RESOURCE_PATH}/${id}`)
+    const { data } = await apiClient.get<Receta>(`${RESOURCE_PATH}/${id}`, {
+      headers: await getAuthHeader(),
+    })
     return data
   } catch (error) {
     throw toReadableError(error)
@@ -99,7 +105,8 @@ export async function updateReceta(
   try {
     const { data } = await apiClient.patch<Receta>(
       `${RESOURCE_PATH}/${id}`,
-      dto
+      dto,
+      { headers: await getAuthHeader() }
     )
     return data
   } catch (error) {
@@ -110,7 +117,8 @@ export async function updateReceta(
 export async function deleteReceta(id: string): Promise<string> {
   try {
     const { data } = await apiClient.delete<DeleteRecetaResult>(
-      `${RESOURCE_PATH}/${id}`
+      `${RESOURCE_PATH}/${id}`,
+      { headers: await getAuthHeader() }
     )
     return data.message
   } catch (error) {

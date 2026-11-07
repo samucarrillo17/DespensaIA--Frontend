@@ -18,8 +18,8 @@ Always use `FieldGroup` + `Field` — never raw `div` with `space-y-*`:
 ```tsx
 <FieldGroup>
   <Field>
-    <FieldLabel htmlFor="email">Email</FieldLabel>
-    <Input id="email" type="email" />
+    <FieldLabel htmlFor="correo">correo</FieldLabel>
+    <Input id="correo" type="correo" />
   </Field>
   <Field>
     <FieldLabel htmlFor="password">Password</FieldLabel>
@@ -177,15 +177,15 @@ Both attributes are needed — `data-invalid`/`data-disabled` styles the field (
 ```tsx
 // Invalid.
 <Field data-invalid>
-  <FieldLabel htmlFor="email">Email</FieldLabel>
-  <Input id="email" aria-invalid />
-  <FieldDescription>Invalid email address.</FieldDescription>
+  <FieldLabel htmlFor="correo">correo</FieldLabel>
+  <Input id="correo" aria-invalid />
+  <FieldDescription>Invalid correo address.</FieldDescription>
 </Field>
 
 // Disabled.
 <Field data-disabled>
-  <FieldLabel htmlFor="email">Email</FieldLabel>
-  <Input id="email" disabled />
+  <FieldLabel htmlFor="correo">correo</FieldLabel>
+  <Input id="correo" disabled />
 </Field>
 ```
 

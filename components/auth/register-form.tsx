@@ -1,6 +1,7 @@
 "use client"
 
 import { Reveal } from "@awesome-reveal/react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -11,6 +12,7 @@ import {
   registerSchema,
   type RegisterFormValues,
 } from "@/app/schemas/auth/register-schema"
+import { register } from "@/server/auth/actions"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Field,
@@ -18,41 +20,33 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 
 export function RegisterForm() {
-  const [submitted, setSubmitted] = useState(false)
+  const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
 
   const {
-    register,
+    register: registerField,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      password: "",
+      nombre: "",
+      correo: "",
+      contrasena: "",
     },
   })
 
   const onSubmit = async (values: RegisterFormValues) => {
-    // Simulación de llamada al backend (falta integrar Server Action en server/users/actions.ts)
-    console.log("Registro:", values)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    setSubmitted(true)
-  }
-
-  if (submitted) {
-    return (
-      <div className="space-y-2 text-center">
-        <p className="text-sm font-medium">¡Cuenta creada con éxito!</p>
-        <p className="text-sm text-muted-foreground">
-          Revisa tu correo para confirmar tu cuenta.
-        </p>
-      </div>
-    )
+    setError(null)
+    try {
+      await register(values) // además setea la cookie httpOnly desde el servidor
+      router.push("/dashboard/inicio")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado")
+    }
   }
 
   return (
@@ -89,25 +83,25 @@ export function RegisterForm() {
                     className="py-5"
                     type="text"
                     placeholder="John Doe"
-                    aria-invalid={Boolean(errors.name)}
-                    {...register("name")}
+                    aria-invalid={Boolean(errors.nombre)}
+                    {...registerField("nombre")}
                   />
-                  <FieldError>{errors.name?.message}</FieldError>
+                  <FieldError>{errors.nombre?.message}</FieldError>
                 </Field>
               </Reveal>
 
               <Reveal from="bottom" duration={1000} delay={300}>
                 <Field>
-                  <FieldLabel htmlFor="email">Correo</FieldLabel>
+                  <FieldLabel htmlFor="correo">Correo</FieldLabel>
                   <Input
-                    id="email"
+                    id="correo"
                     className="py-5"
                     type="email"
                     placeholder="correo@example.com"
-                    aria-invalid={Boolean(errors.email)}
-                    {...register("email")}
+                    aria-invalid={Boolean(errors.correo)}
+                    {...registerField("correo")}
                   />
-                  <FieldError>{errors.email?.message}</FieldError>
+                  <FieldError>{errors.correo?.message}</FieldError>
                 </Field>
               </Reveal>
               <Reveal from="bottom" duration={1000} delay={500}>
@@ -119,18 +113,21 @@ export function RegisterForm() {
                     className="py-5"
                     type="password"
                     placeholder="********"
-                    aria-invalid={Boolean(errors.password)}
-                    {...register("password")}
+                    aria-invalid={Boolean(errors.contrasena)}
+                    {...registerField("contrasena")}
                   />
-                  <FieldError>{errors.password?.message}</FieldError>
+                  <FieldError>{errors.contrasena?.message}</FieldError>
                 </Field>
               </Reveal>
               <Reveal from="bottom" duration={1000} delay={600}>
                 <Field>
-                  <Button type="submit" className="py-5">
+                  <Button type="submit" className="py-5" disabled={isSubmitting}>
                     Regitrarme
                   </Button>
                 </Field>
+              </Reveal>
+              <Reveal from="bottom" duration={1000} delay={550}>
+                <FieldError>{error}</FieldError>
               </Reveal>
               {/* <Reveal from="bottom" duration={1000} delay={600}>
                 <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">

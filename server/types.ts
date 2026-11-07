@@ -1,3 +1,13 @@
+/** Respuesta de /auth/register y /auth/login. */
+export type AuthResponse = {
+  id: string
+  correo: string
+  nombre: string
+  /** ISO 8601. */
+  createdAt: string
+  token: string
+}
+
 export type Ingredient = {
   id: string
   nombre: string

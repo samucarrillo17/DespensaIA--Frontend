@@ -10,6 +10,7 @@ import {
   type UpdateIngredientFormValues,
 } from "@/app/schemas/inventory/ingredient-schema"
 import { apiClient } from "@/server/lib/api-client"
+import { getAuthHeader } from "@/server/lib/auth"
 import type { Ingredient } from "@/server/types"
 
 const RESOURCE_PATH = "ingredientes"
@@ -32,7 +33,9 @@ function toReadableError(error: unknown): Error {
 
 export async function listIngredients(): Promise<Ingredient[]> {
   try {
-    const { data } = await apiClient.get<Ingredient[]>(RESOURCE_PATH)
+    const { data } = await apiClient.get<Ingredient[]>(RESOURCE_PATH, {
+      headers: await getAuthHeader(),
+    })
     return data
   } catch (error) {
     throw toReadableError(error)
@@ -41,7 +44,9 @@ export async function listIngredients(): Promise<Ingredient[]> {
 
 export async function getIngredient(id: string): Promise<Ingredient> {
   try {
-    const { data } = await apiClient.get<Ingredient>(`${RESOURCE_PATH}/${id}`)
+    const { data } = await apiClient.get<Ingredient>(`${RESOURCE_PATH}/${id}`, {
+      headers: await getAuthHeader(),
+    })
     return data
   } catch (error) {
     throw toReadableError(error)
@@ -58,7 +63,8 @@ export async function addIngredient(
   try {
     const { data } = await apiClient.post<Ingredient>(
       RESOURCE_PATH,
-      parsed.data
+      parsed.data,
+      { headers: await getAuthHeader() }
     )
     return data
   } catch (error) {
@@ -77,7 +83,8 @@ export async function updateIngredient(
   try {
     const { data } = await apiClient.patch<Ingredient>(
       `${RESOURCE_PATH}/${id}`,
-      parsed.data
+      parsed.data,
+      { headers: await getAuthHeader() }
     )
     return data
   } catch (error) {
@@ -87,7 +94,9 @@ export async function updateIngredient(
 
 export async function removeIngredient(id: string): Promise<boolean> {
   try {
-    await apiClient.delete(`${RESOURCE_PATH}/${id}`)
+    await apiClient.delete(`${RESOURCE_PATH}/${id}`, {
+      headers: await getAuthHeader(),
+    })
     return true
   } catch (error) {
     throw toReadableError(error)

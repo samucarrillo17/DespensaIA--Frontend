@@ -97,16 +97,16 @@ These are the most common patterns that differentiate correct shadcn/ui code. Fo
 // Form layout: FieldGroup + Field, not div + Label.
 <FieldGroup>
   <Field>
-    <FieldLabel htmlFor="email">Email</FieldLabel>
-    <Input id="email" />
+    <FieldLabel htmlFor="correo">correo</FieldLabel>
+    <Input id="correo" />
   </Field>
 </FieldGroup>
 
 // Validation: data-invalid on Field, aria-invalid on the control.
 <Field data-invalid>
-  <FieldLabel>Email</FieldLabel>
+  <FieldLabel>correo</FieldLabel>
   <Input aria-invalid />
-  <FieldDescription>Invalid email.</FieldDescription>
+  <FieldDescription>Invalid correo.</FieldDescription>
 </Field>
 
 // Icons in buttons: data-icon, no sizing classes.
@@ -138,7 +138,7 @@ These are the most common patterns that differentiate correct shadcn/ui code. Fo
 | Data display               | `Table`, `Card`, `Badge`, `Avatar`                                                                  |
 | Navigation                 | `Sidebar`, `NavigationMenu`, `Breadcrumb`, `Tabs`, `Pagination`                                     |
 | Overlays                   | `Dialog` (modal), `Sheet` (side panel), `Drawer` (bottom sheet), `AlertDialog` (confirmation)       |
-| Feedback                   | `toast` (Base UI), `sonner` (Radix/Aria), `Alert`, `Progress`, `Skeleton`, `Spinner`                 |
+| Feedback                   | `toast` (Base UI), `sonner` (Radix/Aria), `Alert`, `Progress`, `Skeleton`, `Spinner`                |
 | Command palette            | `Command` inside `Dialog`                                                                           |
 | Charts                     | `Chart` (wraps Recharts)                                                                            |
 | Layout                     | `Card`, `Separator`, `Resizable`, `ScrollArea`, `Accordion`, `Collapsible`                          |

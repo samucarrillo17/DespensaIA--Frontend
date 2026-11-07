@@ -1,5 +1,6 @@
 "use client"
-import { Cascade, Reveal } from "@awesome-reveal/react"
+import { Reveal } from "@awesome-reveal/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -8,17 +9,18 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
 import { LoginFormValues, loginSchema } from "@/app/schemas/auth/login-schema"
+import { login } from "@/server/auth/actions"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useState } from "react"
 
 export function LoginForm({}: React.ComponentProps<"div">) {
-  const [submitted, setSubmitted] = useState(false)
+  const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
 
   const {
     register,
@@ -27,16 +29,19 @@ export function LoginForm({}: React.ComponentProps<"div">) {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      correo: "",
+      contrasena: "",
     },
   })
 
   const onSubmit = async (values: LoginFormValues) => {
-    // Simulación de llamada al backend (falta integrar Server Action en server/users/actions.ts)
-    console.log("Login:", values)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    setSubmitted(true)
+    setError(null)
+    try {
+      await login(values) // además setea la cookie httpOnly desde el servidor
+      router.push("/dashboard/inicio")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado")
+    }
   }
   return (
     <div className="flex flex-col gap-6">
@@ -66,16 +71,16 @@ export function LoginForm({}: React.ComponentProps<"div">) {
               </Reveal>
               <Reveal from="bottom" duration={1000} delay={200}>
                 <Field>
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <FieldLabel htmlFor="correo">correo</FieldLabel>
                   <Input
-                    id="email"
+                    id="correo"
                     className="py-5"
                     type="email"
                     placeholder="m@example.com"
-                    aria-invalid={Boolean(errors.email)}
-                    {...register("email")}
+                    aria-invalid={Boolean(errors.correo)}
+                    {...register("correo")}
                   />
-                  <FieldError>{errors.email?.message}</FieldError>
+                  <FieldError>{errors.correo?.message}</FieldError>
                 </Field>
               </Reveal>
               <Reveal from="bottom" duration={1000} delay={300}>
@@ -94,18 +99,21 @@ export function LoginForm({}: React.ComponentProps<"div">) {
                     className="py-5"
                     type="password"
                     placeholder="********"
-                    aria-invalid={Boolean(errors.password)}
-                    {...register("password")}
+                    aria-invalid={Boolean(errors.contrasena)}
+                    {...register("contrasena")}
                   />
-                  <FieldError>{errors.password?.message}</FieldError>
+                  <FieldError>{errors.contrasena?.message}</FieldError>
                 </Field>
               </Reveal>
               <Reveal from="bottom" duration={1000} delay={400}>
                 <Field>
-                  <Button type="submit" className="py-5">
+                  <Button type="submit" className="py-5" disabled={isSubmitting}>
                     Iniciar Sesion
                   </Button>
                 </Field>
+              </Reveal>
+              <Reveal from="bottom" duration={1000} delay={450}>
+                <FieldError>{error}</FieldError>
               </Reveal>
               {/* <Reveal from="bottom" duration={1000} delay={500}>
                 <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
