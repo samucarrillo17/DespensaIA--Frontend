@@ -42,7 +42,8 @@ export function RegisterForm() {
   const onSubmit = async (values: RegisterFormValues) => {
     setError(null)
     try {
-      await register(values) // además setea la cookie httpOnly desde el servidor
+      const result = await register(values) // además setea la cookie httpOnly desde el servidor
+      localStorage.setItem("user", JSON.stringify(result))
       router.push("/dashboard/inicio")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado")
