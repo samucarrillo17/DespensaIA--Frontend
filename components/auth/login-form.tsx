@@ -37,7 +37,8 @@ export function LoginForm({}: React.ComponentProps<"div">) {
   const onSubmit = async (values: LoginFormValues) => {
     setError(null)
     try {
-      await login(values) // además setea la cookie httpOnly desde el servidor
+      const result = await login(values) // además setea la cookie httpOnly desde el servidor
+      localStorage.setItem("user", JSON.stringify(result))
       router.push("/dashboard/inicio")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado")

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Heart, ListChecks, Sparkles } from "lucide-react"
+import { Heart, ListChecks, LogOut, Sparkles } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import type {
@@ -15,16 +15,27 @@ import {
   updateIngredient,
 } from "@/server/ingredients/actions"
 import { deleteReceta, listRecetas } from "@/server/recetas/actions"
-import type { Ingredient, Receta } from "@/server/types"
+import type { AuthResponse, Ingredient, Receta } from "@/server/types"
 import { toast } from "@/components/ui/toast"
 import { PantryTab } from "./pantry-tab"
 import { RecipeGrid } from "./recipe-grid"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu"
+import { Button } from "../ui/button"
+
+import "blobatar/motion.css"
+import { Blobatar } from "../ui/blobatar"
+import { useRouter } from "next/navigation"
+import { logout } from "@/server/auth/actions"
+
+
 
 export function Dashboard() {
   const [tab, setTab] = useState<string>("pantry")
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [recipes, setRecipes] = useState<Receta[]>([])
   const [isCargandoRecetas, setIsCargandoRecetas] = useState(true)
+  const [activeUser, setActiveUser] = useState<AuthResponse | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     async function cargarIngredientes() {
@@ -40,6 +51,12 @@ export function Dashboard() {
               : "No se pudieron cargar los ingredientes",
         })
       }
+    }
+    const activeUser: AuthResponse | null = JSON.parse(
+      localStorage.getItem("user") || "null"
+    )
+    if (activeUser) {
+      setActiveUser(activeUser)
     }
     void cargarIngredientes()
   }, [])
@@ -125,6 +142,12 @@ function toggleFavorite() {
   // Sin efecto hasta que el backend exponga el campo «favorito».
 }
 
+async function logoutOnclick() {
+  await logout()
+  router.push("/login")
+  localStorage.removeItem("user")
+}
+
 async function deleteRecipe(id: string) {
   try {
     await deleteReceta(id)
@@ -148,15 +171,58 @@ function removeFavorite() {
   return (
     <div className="min-h-dvh bg-[#f6fffc]">
       <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-4 md:px-6">
-          <img src="/icon.svg" className="size-12" alt="" />
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 md:px-6">
+          <div className="flex items-center gap-3">
+            <img src="/icon.svg" className="size-12" alt="" />
 
-          <div className="flex flex-col">
-            <h1 className="text-md font-medium tracking-tight">Despensa IA</h1>
-            <span className="text-xs text-muted-foreground">
-              Recetas con lo que tienes en casa
-            </span>
+            <div className="flex flex-col">
+              <h1 className="text-md font-medium tracking-tight">
+                Despensa IA
+              </h1>
+              <span className="text-xs text-muted-foreground">
+                Recetas con lo que tienes en casa
+              </span>
+            </div>
           </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Blobatar
+                    name={activeUser ? activeUser.nombre : "Usuario"}
+                    blobatar={{
+                      animate: "hover",
+                    }}
+                    className="h-10 w-10 rounded-full border border-slate-200"
+                  />
+                </Button>
+              }
+            />
+            <DropdownMenuContent className="w-32">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>
+                  {activeUser ? activeUser.nombre : "nombre no encontrado"}
+                </DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {activeUser ? activeUser.correo : "correo no encontrado"}
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  onClick={logoutOnclick}
+                  variant="destructive"
+                  className="cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Salir
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
