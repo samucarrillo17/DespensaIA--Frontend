@@ -83,7 +83,7 @@ export function IngredientForm({
       </div>
       <div className="flex gap-3">
         <div
-          className={cn("flex flex-col gap-1.5", stacked ? "flex-1" : "w-28")}
+          className={cn("flex flex-col gap-1.5", stacked ? "flex-1" : "w-full sm:w-28")}
         >
           <Label htmlFor={`${idPrefix}-cantidad`}>Cantidad</Label>
           <Input
@@ -103,7 +103,7 @@ export function IngredientForm({
           ) : null}
         </div>
         <div
-          className={cn("flex flex-col gap-1.5", stacked ? "flex-1" : "w-28")}
+          className={cn("flex flex-col gap-1.5", stacked ? "flex-1" : "w-full sm:w-28")}
         >
           <Label htmlFor={`${idPrefix}-unidad`}>Unidad</Label>
           <Controller

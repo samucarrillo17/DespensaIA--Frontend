@@ -3,7 +3,11 @@
 /** Server Actions para la entidad 'auth' (backend real vía Axios). */
 
 import { cookies } from "next/headers"
-import { isAxiosError } from "axios"
+import {
+  actionFailure,
+  actionSuccess,
+  type ActionState,
+} from "@/server/lib/api-errors"
 import { apiClient } from "@/server/lib/api-client"
 import { AUTH_COOKIE } from "@/server/lib/auth"
 import { registerSchema, type RegisterFormValues } from "@/app/schemas/auth/register-schema"
@@ -12,22 +16,6 @@ import type { AuthResponse } from "@/server/types"
 
 const RESOURCE_PATH = "auth"
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7 // 7 días
-
-/** Traduce un error de Axios/backend a un Error con mensaje legible. */
-function toReadableError(error: unknown): Error {
-  if (isAxiosError(error)) {
-    const data = error.response?.data as
-      { message?: string; error?: string } | undefined
-    const message = data?.message ?? data?.error
-    return new Error(
-      message ??
-        `El backend respondió con el estado ${
-          error.response?.status ?? "desconocido"
-        }`
-    )
-  }
-  return error instanceof Error ? error : new Error(String(error))
-}
 
 /** Guarda el token del backend en una cookie httpOnly (solo accesible desde el servidor). */
 async function guardarToken(token: string): Promise<void> {
@@ -43,10 +31,12 @@ async function guardarToken(token: string): Promise<void> {
   })
 }
 
-export async function register(values: RegisterFormValues): Promise<AuthResponse> {
+export async function register(
+  values: RegisterFormValues
+): Promise<ActionState<AuthResponse>> {
   const parsed = registerSchema.safeParse(values)
   if (!parsed.success) {
-    throw new Error("Datos de registro inválidos")
+    return { ok: false, message: "Datos de registro inválidos" }
   }
   try {
     const { data } = await apiClient.post<AuthResponse>(
@@ -54,16 +44,18 @@ export async function register(values: RegisterFormValues): Promise<AuthResponse
       parsed.data
     )
     await guardarToken(data.token)
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo registrar la cuenta")
   }
 }
 
-export async function login(values: LoginFormValues): Promise<AuthResponse> {
+export async function login(
+  values: LoginFormValues
+): Promise<ActionState<AuthResponse>> {
   const parsed = loginSchema.safeParse(values)
   if (!parsed.success) {
-    throw new Error("Credenciales inválidas")
+    return { ok: false, message: "Credenciales inválidas" }
   }
   try {
     const { data } = await apiClient.post<AuthResponse>(
@@ -71,9 +63,9 @@ export async function login(values: LoginFormValues): Promise<AuthResponse> {
       parsed.data
     )
     await guardarToken(data.token)
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo iniciar sesión")
   }
 }
 

@@ -25,10 +25,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 import type { Receta } from "@/server/types"
-import {
-  DIFICULTAD_ETIQUETAS,
-  formatIngredienteReceta,
-} from "./recipe-format"
+import { DIFICULTAD_ETIQUETAS, formatIngredienteReceta } from "./recipe-format"
 
 type RecipeCardProps = {
   recipe: Receta
@@ -53,7 +50,7 @@ export function RecipeCard({
   const favorite = false
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex h-full flex-col">
       <CardHeader>
         <CardTitle className="leading-snug text-pretty">
           {recipe.nombre}

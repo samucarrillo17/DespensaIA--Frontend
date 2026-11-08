@@ -2,8 +2,12 @@
 
 /** Server Actions para la tabla/entidad 'recetas' (backend real vía Axios). */
 
-import { isAxiosError } from "axios"
 import { apiClient } from "@/server/lib/api-client"
+import {
+  actionFailure,
+  actionSuccess,
+  type ActionState,
+} from "@/server/lib/api-errors"
 import { getAuthHeader } from "@/server/lib/auth"
 import type {
   CreateRecetaDto,
@@ -27,51 +31,22 @@ function clampOffset(offset: number | undefined): number | undefined {
   return Math.max(0, offset)
 }
 
-/** Traduce un error de Axios/backend a un Error con mensaje legible. */
-function toReadableError(error: unknown): Error {
-  if (isAxiosError(error)) {
-    // Formato Nest estándar: { statusCode, message: string | string[], error }
-    const data = error.response?.data as
-      {
-        statusCode?: number
-        message?: string | string[]
-        error?: string
-      }
-      | undefined
-
-    let message: string | undefined
-    if (Array.isArray(data?.message)) {
-      message = (data.message as string[]).join("\n")
-    } else {
-      message = data?.message ?? data?.error
-    }
-
-    return new Error(
-      message ??
-        `El backend respondió con el estado ${
-          error.response?.status ?? "desconocido"
-        }`
-    )
-  }
-  return error instanceof Error ? error : new Error(String(error))
-}
-
 export async function createReceta(
   dto: CreateRecetaDto
-): Promise<Receta> {
+): Promise<ActionState<Receta>> {
   try {
     const { data } = await apiClient.post<Receta>(RESOURCE_PATH, dto, {
       headers: await getAuthHeader(),
     })
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo crear la receta")
   }
 }
 
 export async function listRecetas(
   params?: { limit?: number; offset?: number }
-): Promise<Receta[]> {
+): Promise<ActionState<Receta[]>> {
   const { limit, offset } = params ?? {}
   try {
     const { data } = await apiClient.get<Receta[]>(RESOURCE_PATH, {
@@ -81,47 +56,47 @@ export async function listRecetas(
       },
       headers: await getAuthHeader(),
     })
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudieron cargar las recetas")
   }
 }
 
-export async function getReceta(id: string): Promise<Receta> {
+export async function getReceta(id: string): Promise<ActionState<Receta>> {
   try {
     const { data } = await apiClient.get<Receta>(`${RESOURCE_PATH}/${id}`, {
       headers: await getAuthHeader(),
     })
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo cargar la receta")
   }
 }
 
 export async function updateReceta(
   id: string,
   dto: UpdateRecetaDto
-): Promise<Receta> {
+): Promise<ActionState<Receta>> {
   try {
     const { data } = await apiClient.patch<Receta>(
       `${RESOURCE_PATH}/${id}`,
       dto,
       { headers: await getAuthHeader() }
     )
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo actualizar la receta")
   }
 }
 
-export async function deleteReceta(id: string): Promise<string> {
+export async function deleteReceta(id: string): Promise<ActionState<string>> {
   try {
     const { data } = await apiClient.delete<DeleteRecetaResult>(
       `${RESOURCE_PATH}/${id}`,
       { headers: await getAuthHeader() }
     )
-    return data.message
+    return actionSuccess(data.message)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo eliminar la receta")
   }
 }

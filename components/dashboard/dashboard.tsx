@@ -39,18 +39,12 @@ export function Dashboard() {
 
   useEffect(() => {
     async function cargarIngredientes() {
-      try {
-        const data = await listIngredients()
-        setIngredients(data)
-      } catch (error) {
-        toast.add({
-          type: "error",
-          description:
-            error instanceof Error
-              ? error.message
-              : "No se pudieron cargar los ingredientes",
-        })
+      const resultado = await listIngredients()
+      if (!resultado.ok) {
+        toast.add({ type: "error", description: resultado.message })
+        return
       }
+      setIngredients(resultado.data)
     }
     const activeUser: AuthResponse | null = JSON.parse(
       localStorage.getItem("user") || "null"
@@ -63,70 +57,47 @@ export function Dashboard() {
 
   useEffect(() => {
     async function cargarRecetas() {
-      try {
-        const data = await listRecetas()
-        setRecipes(data)
-      } catch (error) {
-        toast.add({
-          type: "error",
-          description:
-            error instanceof Error
-              ? error.message
-              : "No se pudieron cargar las recetas",
-        })
-      } finally {
-        setIsCargandoRecetas(false)
+      const resultado = await listRecetas()
+      if (!resultado.ok) {
+        toast.add({ type: "error", description: resultado.message })
+      } else {
+        setRecipes(resultado.data)
       }
+      setIsCargandoRecetas(false)
     }
     void cargarRecetas()
   }, [])
 
   async function handleCreate(values: AddIngredientFormValues) {
-    try {
-      const creado = await addIngredient(values)
-      setIngredients((prev) => [...prev, creado])
-      toast.add({ type: "success", description: "Ingrediente añadido" })
-    } catch (error) {
-      toast.add({
-        type: "error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "No se pudo añadir el ingrediente",
-      })
+    const resultado = await addIngredient(values)
+    if (!resultado.ok) {
+      toast.add({ type: "error", description: resultado.message })
+      return
     }
+    setIngredients((prev) => [...prev, resultado.data])
+    toast.add({ type: "success", description: "Ingrediente añadido" })
   }
 
   async function handleUpdate(id: string, values: UpdateIngredientFormValues) {
-    try {
-      const actualizado = await updateIngredient(id, values)
-      setIngredients((prev) => prev.map((i) => (i.id === id ? actualizado : i)))
-      toast.add({ type: "success", description: "Ingrediente actualizado" })
-    } catch (error) {
-      toast.add({
-        type: "error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "No se pudo actualizar el ingrediente",
-      })
+    const resultado = await updateIngredient(id, values)
+    if (!resultado.ok) {
+      toast.add({ type: "error", description: resultado.message })
+      return
     }
+    setIngredients((prev) =>
+      prev.map((i) => (i.id === id ? resultado.data : i))
+    )
+    toast.add({ type: "success", description: "Ingrediente actualizado" })
   }
 
   async function handleDelete(id: string) {
-    try {
-      await removeIngredient(id)
-      setIngredients((prev) => prev.filter((i) => i.id !== id))
-      toast.add({ type: "success", description: "Ingrediente eliminado" })
-    } catch (error) {
-      toast.add({
-        type: "error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "No se pudo eliminar el ingrediente",
-      })
+    const resultado = await removeIngredient(id)
+    if (!resultado.ok) {
+      toast.add({ type: "error", description: resultado.message })
+      return
     }
+    setIngredients((prev) => prev.filter((i) => i.id !== id))
+    toast.add({ type: "success", description: "Ingrediente eliminado" })
   }
 
 // ----------------- Recipes
@@ -149,19 +120,13 @@ async function logoutOnclick() {
 }
 
 async function deleteRecipe(id: string) {
-  try {
-    await deleteReceta(id)
-    setRecipes((prev) => prev.filter((r) => r.id !== id))
-    toast.add({ type: "success", description: "Receta eliminada" })
-  } catch (error) {
-    toast.add({
-      type: "error",
-      description:
-        error instanceof Error
-          ? error.message
-          : "No se pudo eliminar la receta",
-    })
+  const resultado = await deleteReceta(id)
+  if (!resultado.ok) {
+    toast.add({ type: "error", description: resultado.message })
+    return
   }
+  setRecipes((prev) => prev.filter((r) => r.id !== id))
+  toast.add({ type: "success", description: "Receta eliminada" })
 }
 
 function removeFavorite() {
@@ -199,7 +164,7 @@ function removeFavorite() {
                 </Button>
               }
             />
-            <DropdownMenuContent className="w-32">
+            <DropdownMenuContent className="w-45">
               <DropdownMenuGroup>
                 <DropdownMenuLabel>
                   {activeUser ? activeUser.nombre : "nombre no encontrado"}
@@ -242,7 +207,7 @@ function removeFavorite() {
           onValueChange={(value) => setTab(String(value))}
           className="gap-6"
         >
-          <TabsList className="h-auto w-full flex-wrap sm:w-fit">
+          <TabsList className="w-full max-sm:h-auto max-sm:flex-col max-sm:items-stretch sm:w-fit">
             <TabsTrigger value="pantry" className="gap-2 px-3 py-1.5">
               <Sparkles aria-hidden="true" />
               Crear receta

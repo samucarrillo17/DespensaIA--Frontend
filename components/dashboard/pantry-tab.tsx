@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Reveal } from "@awesome-reveal/react"
 import { Loader2, Package, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -75,124 +76,131 @@ export function PantryTab({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <Card>
-        <CardHeader>
-          <CardTitle>Mis ingredientes</CardTitle>
-          <CardDescription>
-            Añade lo que tienes en casa y selecciona los que quieras usar para
-            generar una receta.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-5">
-          <IngredientForm onSubmit={onCreate} />
+      <Reveal from="bottom" duration={700}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Mis ingredientes</CardTitle>
+            <CardDescription>
+              Añade lo que tienes en casa y selecciona los que quieras usar para
+              generar una receta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <IngredientForm onSubmit={onCreate} />
 
-          {ingredients.length === 0 ? (
-            <Empty className="border border-dashed">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Package />
-                </EmptyMedia>
-                <EmptyTitle>Aún no has añadido ingredientes</EmptyTitle>
-                <EmptyDescription>
-                  Añade al menos un ingrediente para poder generar una receta.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <div className="overflow-hidden rounded-lg border">
-              <div className="flex items-center gap-3 border-b bg-muted/50 px-4 py-2.5">
-                <Checkbox
-                  id="select-all"
-                  checked={allSelected}
-                  indeterminate={someSelected}
-                  onCheckedChange={toggleSelectAll}
-                />
-                <label
-                  htmlFor="select-all"
-                  className="flex-1 cursor-pointer text-sm font-medium"
-                >
-                  Seleccionar todos
-                </label>
-                <span className="text-sm tabular-nums text-muted-foreground">
-                  {selected.length} de {ingredients.length}
-                </span>
-              </div>
-              <ul className="flex flex-col divide-y" aria-label="Lista de ingredientes">
-                {ingredients.map((ingredient) => (
-                  <IngredientRow
-                    key={ingredient.id}
-                    ingredient={ingredient}
-                    selected={selectedIds.has(ingredient.id)}
-                    onToggleSelect={toggleSelect}
-                    onUpdate={onUpdate}
-                    onDelete={(id) => {
-                      deleteSelectedId(id)
-                      onDelete(id)
-                    }}
+            {ingredients.length === 0 ? (
+              <Empty className="border border-dashed">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Package />
+                  </EmptyMedia>
+                  <EmptyTitle>Aún no has añadido ingredientes</EmptyTitle>
+                  <EmptyDescription>
+                    Añade al menos un ingrediente para poder generar una receta.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            ) : (
+              <div className="overflow-hidden rounded-lg border">
+                <div className="flex items-center gap-3 border-b bg-muted/50 px-4 py-2.5">
+                  <Checkbox
+                    id="select-all"
+                    checked={allSelected}
+                    indeterminate={someSelected}
+                    onCheckedChange={toggleSelectAll}
                   />
+                  <label
+                    htmlFor="select-all"
+                    className="flex-1 cursor-pointer text-sm font-medium"
+                  >
+                    Seleccionar todos
+                  </label>
+                  <span className="text-sm text-muted-foreground tabular-nums">
+                    {selected.length} de {ingredients.length}
+                  </span>
+                </div>
+                <ul
+                  className="flex flex-col divide-y"
+                  aria-label="Lista de ingredientes"
+                >
+                  {ingredients.map((ingredient) => (
+                    <IngredientRow
+                      key={ingredient.id}
+                      ingredient={ingredient}
+                      selected={selectedIds.has(ingredient.id)}
+                      onToggleSelect={toggleSelect}
+                      onUpdate={onUpdate}
+                      onDelete={(id) => {
+                        deleteSelectedId(id)
+                        onDelete(id)
+                      }}
+                    />
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Reveal>
+
+      <Reveal from="bottom" duration={700} delay={150}>
+        <Card className="h-fit self-start bg-primary text-primary-foreground lg:sticky lg:top-6">
+          <CardHeader>
+            <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary-foreground/15">
+              <Sparkles className="size-5" aria-hidden="true" />
+            </div>
+            <CardTitle className="text-lg">Generar receta con IA</CardTitle>
+            <CardDescription
+              className="text-primary-foreground/80"
+              aria-live="polite"
+            >
+              {selected.length === 0
+                ? "Selecciona uno o más ingredientes de tu despensa para generar una receta."
+                : `Usaremos ${selected.length} ${
+                    selected.length === 1
+                      ? "ingrediente seleccionado"
+                      : "ingredientes seleccionados"
+                  } para crear tu receta.`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {someSelected ? (
+              <ul
+                className="flex flex-wrap gap-1.5"
+                aria-label="Ingredientes seleccionados"
+              >
+                {selected.map((i) => (
+                  <li
+                    key={i.id}
+                    className="rounded-md bg-primary-foreground/15 px-2 py-0.5 text-xs font-medium"
+                  >
+                    {i.nombre}
+                  </li>
                 ))}
               </ul>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="h-fit bg-primary text-primary-foreground self-start lg:sticky lg:top-6">
-        <CardHeader>
-          <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary-foreground/15">
-            <Sparkles className="size-5" aria-hidden="true" />
-          </div>
-          <CardTitle className="text-lg">Generar receta con IA</CardTitle>
-          <CardDescription
-            className="text-primary-foreground/80"
-            aria-live="polite"
-          >
-            {selected.length === 0
-              ? "Selecciona uno o más ingredientes de tu despensa para generar una receta."
-              : `Usaremos ${selected.length} ${
-                  selected.length === 1
-                    ? "ingrediente seleccionado"
-                    : "ingredientes seleccionados"
-                } para crear tu receta.`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {someSelected ? (
-            <ul
-              className="flex flex-wrap gap-1.5"
-              aria-label="Ingredientes seleccionados"
+            ) : null}
+            <Button
+              size="lg"
+              variant="secondary"
+              className="w-full"
+              onClick={() => onGenerate(selected)}
+              disabled={selected.length === 0 || isGenerating}
             >
-              {selected.map((i) => (
-                <li
-                  key={i.id}
-                  className="rounded-md bg-primary-foreground/15 px-2 py-0.5 text-xs font-medium"
-                >
-                  {i.nombre}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <Button
-            size="lg"
-            variant="secondary"
-            className="w-full"
-            onClick={() => onGenerate(selected)}
-            disabled={selected.length === 0 || isGenerating}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 aria-hidden="true" className="animate-spin" />
-                Generando receta...
-              </>
-            ) : (
-              <>
-                <Sparkles aria-hidden="true" />
-                Generar receta con IA
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+              {isGenerating ? (
+                <>
+                  <Loader2 aria-hidden="true" className="animate-spin" />
+                  Generando receta...
+                </>
+              ) : (
+                <>
+                  <Sparkles aria-hidden="true" />
+                  Generar receta con IA
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </Reveal>
     </div>
   )
 }
