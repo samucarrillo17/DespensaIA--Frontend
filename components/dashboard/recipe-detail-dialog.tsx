@@ -37,7 +37,7 @@ export function RecipeDetailDialog({
         {recipe && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-lg text-pretty">
+              <DialogTitle className="text-2xl text-pretty">
                 {recipe.nombre}
               </DialogTitle>
               <DialogDescription>{recipe.descripcion}</DialogDescription>

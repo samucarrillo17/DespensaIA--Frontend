@@ -2,7 +2,6 @@
 
 /** Server Actions para la tabla/entidad 'ingredients' (backend real vía Axios). */
 
-import { isAxiosError } from "axios"
 import {
   addIngredientFormSchema,
   updateIngredientFormSchema,
@@ -10,55 +9,46 @@ import {
   type UpdateIngredientFormValues,
 } from "@/app/schemas/inventory/ingredient-schema"
 import { apiClient } from "@/server/lib/api-client"
+import {
+  actionFailure,
+  actionSuccess,
+  type ActionState,
+} from "@/server/lib/api-errors"
 import { getAuthHeader } from "@/server/lib/auth"
 import type { Ingredient } from "@/server/types"
 
 const RESOURCE_PATH = "ingredientes"
 
-/** Traduce un error de Axios/backend a un Error con mensaje legible. */
-function toReadableError(error: unknown): Error {
-  if (isAxiosError(error)) {
-    const data = error.response?.data as
-      { message?: string; error?: string } | undefined
-    const message = data?.message ?? data?.error
-    return new Error(
-      message ??
-        `El backend respondió con el estado ${
-          error.response?.status ?? "desconocido"
-        }`
-    )
-  }
-  return error instanceof Error ? error : new Error(String(error))
-}
-
-export async function listIngredients(): Promise<Ingredient[]> {
+export async function listIngredients(): Promise<
+  ActionState<Ingredient[]>
+> {
   try {
     const { data } = await apiClient.get<Ingredient[]>(RESOURCE_PATH, {
       headers: await getAuthHeader(),
     })
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudieron cargar los ingredientes")
   }
 }
 
-export async function getIngredient(id: string): Promise<Ingredient> {
+export async function getIngredient(id: string): Promise<ActionState<Ingredient>> {
   try {
     const { data } = await apiClient.get<Ingredient>(`${RESOURCE_PATH}/${id}`, {
       headers: await getAuthHeader(),
     })
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo cargar el ingrediente")
   }
 }
 
 export async function addIngredient(
   values: AddIngredientFormValues
-): Promise<Ingredient> {
+): Promise<ActionState<Ingredient>> {
   const parsed = addIngredientFormSchema.safeParse(values)
   if (!parsed.success) {
-    throw new Error("Datos del ingrediente inválidos")
+    return { ok: false, message: "Datos del ingrediente inválidos" }
   }
   try {
     const { data } = await apiClient.post<Ingredient>(
@@ -66,19 +56,19 @@ export async function addIngredient(
       parsed.data,
       { headers: await getAuthHeader() }
     )
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo añadir el ingrediente")
   }
 }
 
 export async function updateIngredient(
   id: string,
   values: UpdateIngredientFormValues
-): Promise<Ingredient> {
+): Promise<ActionState<Ingredient>> {
   const parsed = updateIngredientFormSchema.safeParse(values)
   if (!parsed.success) {
-    throw new Error("Datos del ingrediente inválidos")
+    return { ok: false, message: "Datos del ingrediente inválidos" }
   }
   try {
     const { data } = await apiClient.patch<Ingredient>(
@@ -86,19 +76,19 @@ export async function updateIngredient(
       parsed.data,
       { headers: await getAuthHeader() }
     )
-    return data
+    return actionSuccess(data)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo actualizar el ingrediente")
   }
 }
 
-export async function removeIngredient(id: string): Promise<boolean> {
+export async function removeIngredient(id: string): Promise<ActionState<true>> {
   try {
     await apiClient.delete(`${RESOURCE_PATH}/${id}`, {
       headers: await getAuthHeader(),
     })
-    return true
+    return actionSuccess(true)
   } catch (error) {
-    throw toReadableError(error)
+    return actionFailure(error, "No se pudo eliminar el ingrediente")
   }
 }

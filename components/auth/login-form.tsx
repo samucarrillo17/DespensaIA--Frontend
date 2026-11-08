@@ -36,13 +36,13 @@ export function LoginForm({}: React.ComponentProps<"div">) {
 
   const onSubmit = async (values: LoginFormValues) => {
     setError(null)
-    try {
-      const result = await login(values) // además setea la cookie httpOnly desde el servidor
-      localStorage.setItem("user", JSON.stringify(result))
-      router.push("/dashboard/inicio")
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado")
+    const result = await login(values) // además setea la cookie httpOnly desde el servidor
+    if (!result.ok) {
+      setError(result.message)
+      return
     }
+    localStorage.setItem("user", JSON.stringify(result.data))
+    router.push("/dashboard/inicio")
   }
   return (
     <div className="flex flex-col gap-6">

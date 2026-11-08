@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Reveal } from "@awesome-reveal/react"
 import { BookOpen } from "lucide-react"
 import {
   Empty,
@@ -45,32 +46,40 @@ export function RecipeGrid({
 
   if (recipes.length === 0) {
     return (
-      <Empty className="border border-dashed bg-background">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <BookOpen />
-          </EmptyMedia>
-          <EmptyTitle>{emptyTitle}</EmptyTitle>
-          <EmptyDescription>{emptyDescription}</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <Reveal from="bottom" duration={700}>
+        <Empty className="border border-dashed bg-background">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen />
+            </EmptyMedia>
+            <EmptyTitle>{emptyTitle}</EmptyTitle>
+            <EmptyDescription>{emptyDescription}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </Reveal>
     )
   }
 
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {recipes.map((recipe) => (
-          <RecipeCard
+        {recipes.map((recipe, index) => (
+          <Reveal
             key={recipe.id}
-            recipe={recipe}
-            onView={() => setSelectedId(recipe.id)}
-            onToggleFavorite={() => onToggleFavorite(recipe.id)}
-            onDelete={() => onDelete(recipe.id)}
-            deleteLabel={deleteLabel}
-            deleteDescription={deleteDescription}
-            hideFavoriteToggle={hideFavoriteToggle}
-          />
+            from="bottom"
+            duration={700}
+            delay={Math.min(index, 5) * 100}
+          >
+            <RecipeCard
+              recipe={recipe}
+              onView={() => setSelectedId(recipe.id)}
+              onToggleFavorite={() => onToggleFavorite(recipe.id)}
+              onDelete={() => onDelete(recipe.id)}
+              deleteLabel={deleteLabel}
+              deleteDescription={deleteDescription}
+              hideFavoriteToggle={hideFavoriteToggle}
+            />
+          </Reveal>
         ))}
       </div>
       <RecipeDetailDialog
