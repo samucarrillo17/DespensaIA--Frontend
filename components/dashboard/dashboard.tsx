@@ -14,11 +14,18 @@ import {
   removeIngredient,
   updateIngredient,
 } from "@/server/ingredients/actions"
-import { deleteReceta, listRecetas } from "@/server/recetas/actions"
-import type { AuthResponse, Ingredient, Receta } from "@/server/types"
+import { createReceta, deleteReceta, listRecetas } from "@/server/recetas/actions"
+import { generarReceta } from "@/server/ai/actions"
+import type {
+  AuthResponse,
+  CreateRecetaDto,
+  Ingredient,
+  Receta,
+} from "@/server/types"
 import { toast } from "@/components/ui/toast"
 import { PantryTab } from "./pantry-tab"
 import { RecipeGrid } from "./recipe-grid"
+import { GeneratedRecipeDialog } from "./generated-recipe-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import { Button } from "../ui/button"
 
@@ -35,6 +42,10 @@ export function Dashboard() {
   const [recipes, setRecipes] = useState<Receta[]>([])
   const [isCargandoRecetas, setIsCargandoRecetas] = useState(true)
   const [activeUser, setActiveUser] = useState<AuthResponse | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+  /** Borrador de la receta generada por IA: solo se persiste al pulsar Guardar. */
+  const [draftRecipe, setDraftRecipe] = useState<CreateRecetaDto | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -104,9 +115,32 @@ export function Dashboard() {
 // Pendiente: el backend aún no expone «favorito»; la pestaña se mantiene vacía mientras tanto.
 const favorites: Receta[] = []
 
-// Pendiente: conectar con el endpoint de generación (LLM) del backend cuando exista.
-function handleGenerate() {
-  // La habilitación (requiere ingredientes seleccionados) vive en PantryTab.
+/** Genera la receta con AI a partir de los ingredientes seleccionados en la despensa. */
+async function handleGenerate(selected: Ingredient[]) {
+  setIsGenerating(true)
+  const resultado = await generarReceta(selected.map((i) => i.nombre))
+  setIsGenerating(false)
+  if (!resultado.ok) {
+    toast.add({ type: "error", description: resultado.message })
+    return
+  }
+  setDraftRecipe(resultado.data)
+}
+
+/** Guarda el borrador con el endpoint de crear receta. Cancelar/cerrar nunca persiste. */
+async function handleSaveDraft() {
+  if (!draftRecipe || isSaving) return
+  setIsSaving(true)
+  const resultado = await createReceta(draftRecipe)
+  setIsSaving(false)
+  if (!resultado.ok) {
+    toast.add({ type: "error", description: resultado.message })
+    return
+  }
+  setRecipes((prev) => [resultado.data, ...prev])
+  setDraftRecipe(null)
+  setTab("recipes")
+  toast.add({ type: "success", description: "Receta guardada" })
 }
 
 function toggleFavorite() {
@@ -235,7 +269,7 @@ function removeFavorite() {
               onUpdate={handleUpdate}
               onDelete={handleDelete}
               onGenerate={handleGenerate}
-              isGenerating={false}
+              isGenerating={isGenerating}
             />
           </TabsContent>
 
@@ -267,6 +301,15 @@ function removeFavorite() {
           </TabsContent>
         </Tabs>
       </main>
+
+      <GeneratedRecipeDialog
+        recipe={draftRecipe}
+        onOpenChange={(open) => {
+          if (!open) setDraftRecipe(null)
+        }}
+        onSave={handleSaveDraft}
+        isSaving={isSaving}
+      />
     </div>
   )
 }
