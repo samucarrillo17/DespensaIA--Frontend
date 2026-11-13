@@ -19,9 +19,7 @@ import type { Ingredient } from "@/server/types"
 
 const RESOURCE_PATH = "ingredientes"
 
-export async function listIngredients(): Promise<
-  ActionState<Ingredient[]>
-> {
+export async function listIngredients(): Promise<ActionState<Ingredient[]>> {
   try {
     const { data } = await apiClient.get<Ingredient[]>(RESOURCE_PATH, {
       headers: await getAuthHeader(),
@@ -32,7 +30,9 @@ export async function listIngredients(): Promise<
   }
 }
 
-export async function getIngredient(id: string): Promise<ActionState<Ingredient>> {
+export async function getIngredient(
+  id: string
+): Promise<ActionState<Ingredient>> {
   try {
     const { data } = await apiClient.get<Ingredient>(`${RESOURCE_PATH}/${id}`, {
       headers: await getAuthHeader(),

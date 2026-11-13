@@ -25,7 +25,14 @@ export function actionFailure(error: unknown, fallback: string): ActionFailure {
 }
 
 /** Claves con prioridad para buscar el mensaje dentro del payload del backend. */
-const MESSAGE_KEYS = ["message", "error", "mensaje", "detalle", "detail", "text"]
+const MESSAGE_KEYS = [
+  "message",
+  "error",
+  "mensaje",
+  "detalle",
+  "detail",
+  "text",
+]
 
 /** Metadatos que no deben tratarse como campo de mensaje. */
 const IGNORED_KEYS = new Set(["statusCode", "status", "timestamp", "path"])

@@ -9,11 +9,7 @@ import {
   type ActionState,
 } from "@/server/lib/api-errors"
 import { getAuthHeader } from "@/server/lib/auth"
-import type {
-  CreateRecetaDto,
-  Receta,
-  UpdateRecetaDto,
-} from "@/server/types"
+import type { CreateRecetaDto, Receta, UpdateRecetaDto } from "@/server/types"
 
 const RESOURCE_PATH = "recetas"
 const LIMIT_MAXIMO = 100
@@ -44,9 +40,10 @@ export async function createReceta(
   }
 }
 
-export async function listRecetas(
-  params?: { limit?: number; offset?: number }
-): Promise<ActionState<Receta[]>> {
+export async function listRecetas(params?: {
+  limit?: number
+  offset?: number
+}): Promise<ActionState<Receta[]>> {
   const { limit, offset } = params ?? {}
   try {
     const { data } = await apiClient.get<Receta[]>(RESOURCE_PATH, {

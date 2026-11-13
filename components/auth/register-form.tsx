@@ -122,7 +122,11 @@ export function RegisterForm() {
               </Reveal>
               <Reveal from="bottom" duration={1000} delay={600}>
                 <Field>
-                  <Button type="submit" className="py-5" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    className="py-5"
+                    disabled={isSubmitting}
+                  >
                     Regitrarme
                   </Button>
                 </Field>

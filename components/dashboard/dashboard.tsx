@@ -1,23 +1,34 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Heart, ListChecks, LogOut, Sparkles } from "lucide-react"
+import { ListChecks, LogOut, Sparkles } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import type {
   AddIngredientFormValues,
   UpdateIngredientFormValues,
 } from "@/app/schemas/inventory/ingredient-schema"
+import type { CreateCalificacionFormValues } from "@/app/schemas/ratings/calificacion-schema"
 import {
   addIngredient,
   listIngredients,
   removeIngredient,
   updateIngredient,
 } from "@/server/ingredients/actions"
-import { createReceta, deleteReceta, listRecetas } from "@/server/recetas/actions"
+import {
+  createReceta,
+  deleteReceta,
+  listRecetas,
+} from "@/server/recetas/actions"
+import {
+  createCalificacion,
+  listCalificaciones,
+  updateCalificacion,
+} from "@/server/calificaciones/actions"
 import { generarReceta } from "@/server/ai/actions"
 import type {
   AuthResponse,
+  Calificacion,
   CreateRecetaDto,
   Ingredient,
   Receta,
@@ -26,15 +37,22 @@ import { toast } from "@/components/ui/toast"
 import { PantryTab } from "./pantry-tab"
 import { RecipeGrid } from "./recipe-grid"
 import { GeneratedRecipeDialog } from "./generated-recipe-dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu"
+import { EditRatingDialog } from "./edit-rating-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu"
 import { Button } from "../ui/button"
 
 import "blobatar/motion.css"
 import { Blobatar } from "../ui/blobatar"
 import { useRouter } from "next/navigation"
 import { logout } from "@/server/auth/actions"
-
-
 
 export function Dashboard() {
   const [tab, setTab] = useState<string>("pantry")
@@ -46,10 +64,19 @@ export function Dashboard() {
   /** Borrador de la receta generada por IA: solo se persiste al pulsar Guardar. */
   const [draftRecipe, setDraftRecipe] = useState<CreateRecetaDto | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  /** Calificaciones del usuario, indexadas por recetaId. */
+  const [ratings, setRatings] = useState<Map<string, Calificacion>>(new Map())
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false)
+  /** Receta cuyo diálogo de edición de calificación está abierto. */
+  const [editRatingRecipe, setEditRatingRecipe] = useState<Receta | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    async function cargarIngredientes() {
+    async function cargarDatosIniciales() {
+      const storedUser = localStorage.getItem("user")
+      if (storedUser) {
+        setActiveUser(JSON.parse(storedUser) as AuthResponse)
+      }
       const resultado = await listIngredients()
       if (!resultado.ok) {
         toast.add({ type: "error", description: resultado.message })
@@ -57,13 +84,7 @@ export function Dashboard() {
       }
       setIngredients(resultado.data)
     }
-    const activeUser: AuthResponse | null = JSON.parse(
-      localStorage.getItem("user") || "null"
-    )
-    if (activeUser) {
-      setActiveUser(activeUser)
-    }
-    void cargarIngredientes()
+    void cargarDatosIniciales()
   }, [])
 
   useEffect(() => {
@@ -77,6 +98,20 @@ export function Dashboard() {
       setIsCargandoRecetas(false)
     }
     void cargarRecetas()
+  }, [])
+
+  useEffect(() => {
+    async function cargarCalificaciones() {
+      const resultado = await listCalificaciones()
+      if (!resultado.ok) {
+        // Degradación aceptable: sin badges y el diálogo siempre muestra el
+        // formulario de crear; el resto de la app sigue funcionando.
+        toast.add({ type: "error", description: resultado.message })
+        return
+      }
+      setRatings(new Map(resultado.data.map((c) => [c.recetaId, c])))
+    }
+    void cargarCalificaciones()
   }, [])
 
   async function handleCreate(values: AddIngredientFormValues) {
@@ -111,61 +146,86 @@ export function Dashboard() {
     toast.add({ type: "success", description: "Ingrediente eliminado" })
   }
 
-// ----------------- Recipes
-// Pendiente: el backend aún no expone «favorito»; la pestaña se mantiene vacía mientras tanto.
-const favorites: Receta[] = []
+  // ----------------- Recipes
 
-/** Genera la receta con AI a partir de los ingredientes seleccionados en la despensa. */
-async function handleGenerate(selected: Ingredient[]) {
-  setIsGenerating(true)
-  const resultado = await generarReceta(selected.map((i) => i.nombre))
-  setIsGenerating(false)
-  if (!resultado.ok) {
-    toast.add({ type: "error", description: resultado.message })
-    return
+  /** Genera la receta con AI a partir de los ingredientes seleccionados en la despensa. */
+  async function handleGenerate(selected: Ingredient[]) {
+    setIsGenerating(true)
+    const resultado = await generarReceta(selected.map((i) => i.nombre))
+    setIsGenerating(false)
+    if (!resultado.ok) {
+      toast.add({ type: "error", description: resultado.message })
+      return
+    }
+    setDraftRecipe(resultado.data)
   }
-  setDraftRecipe(resultado.data)
-}
 
-/** Guarda el borrador con el endpoint de crear receta. Cancelar/cerrar nunca persiste. */
-async function handleSaveDraft() {
-  if (!draftRecipe || isSaving) return
-  setIsSaving(true)
-  const resultado = await createReceta(draftRecipe)
-  setIsSaving(false)
-  if (!resultado.ok) {
-    toast.add({ type: "error", description: resultado.message })
-    return
+  /** Guarda el borrador con el endpoint de crear receta. Cancelar/cerrar nunca persiste. */
+  async function handleSaveDraft() {
+    if (!draftRecipe || isSaving) return
+    setIsSaving(true)
+    const resultado = await createReceta(draftRecipe)
+    setIsSaving(false)
+    if (!resultado.ok) {
+      toast.add({ type: "error", description: resultado.message })
+      return
+    }
+    setRecipes((prev) => [resultado.data, ...prev])
+    setDraftRecipe(null)
+    setTab("recipes")
+    toast.add({ type: "success", description: "Receta guardada" })
   }
-  setRecipes((prev) => [resultado.data, ...prev])
-  setDraftRecipe(null)
-  setTab("recipes")
-  toast.add({ type: "success", description: "Receta guardada" })
-}
 
-function toggleFavorite() {
-  // Sin efecto hasta que el backend exponga el campo «favorito».
-}
-
-async function logoutOnclick() {
-  await logout()
-  router.push("/login")
-  localStorage.removeItem("user")
-}
-
-async function deleteRecipe(id: string) {
-  const resultado = await deleteReceta(id)
-  if (!resultado.ok) {
-    toast.add({ type: "error", description: resultado.message })
-    return
+  /**
+   * Upsert de la calificación: PATCH si ya existe para la receta, POST si no.
+   * Resuelve true solo si el backend lo confirmó (para cerrar diálogos).
+   */
+  async function handleRate(
+    idReceta: string,
+    values: CreateCalificacionFormValues
+  ): Promise<boolean> {
+    setIsSubmittingRating(true)
+    const yaCalificada = ratings.has(idReceta)
+    const resultado = yaCalificada
+      ? await updateCalificacion(idReceta, values)
+      : await createCalificacion(idReceta, values)
+    setIsSubmittingRating(false)
+    if (!resultado.ok) {
+      toast.add({ type: "error", description: resultado.message })
+      return false
+    }
+    setRatings((prev) => new Map(prev).set(idReceta, resultado.data))
+    toast.add({
+      type: "success",
+      description: yaCalificada
+        ? "Calificación actualizada"
+        : "Calificación registrada",
+    })
+    setEditRatingRecipe(null)
+    return true
   }
-  setRecipes((prev) => prev.filter((r) => r.id !== id))
-  toast.add({ type: "success", description: "Receta eliminada" })
-}
 
-function removeFavorite() {
-  // Sin efecto hasta que el backend exponga el campo «favorito».
-}
+  async function logoutOnclick() {
+    await logout()
+    router.push("/login")
+    localStorage.removeItem("user")
+  }
+
+  async function deleteRecipe(id: string) {
+    const resultado = await deleteReceta(id)
+    if (!resultado.ok) {
+      toast.add({ type: "error", description: resultado.message })
+      return
+    }
+    setRecipes((prev) => prev.filter((r) => r.id !== id))
+    // La receta desaparece, también su calificación del estado local.
+    setRatings((prev) => {
+      const siguiente = new Map(prev)
+      siguiente.delete(id)
+      return siguiente
+    })
+    toast.add({ type: "success", description: "Receta eliminada" })
+  }
 
   return (
     <div className="min-h-dvh bg-[#f6fffc]">
@@ -232,7 +292,7 @@ function removeFavorite() {
           </h1>
           <p className="text-sm text-pretty text-muted-foreground">
             Registra tus ingredientes, genera recetas con IA y guarda tus
-            favoritas.
+            recetas.
           </p>
         </div>
 
@@ -253,13 +313,6 @@ function removeFavorite() {
                 {recipes.length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="favorites" className="gap-2 px-3 py-1.5">
-              <Heart aria-hidden="true" />
-              Favoritos
-              <Badge variant="secondary" className="ml-1">
-                {favorites.length}
-              </Badge>
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pantry">
@@ -277,26 +330,15 @@ function removeFavorite() {
             <RecipeGrid
               recipes={recipes}
               isLoading={isCargandoRecetas}
-              onToggleFavorite={toggleFavorite}
+              ratings={ratings}
+              onRate={handleRate}
+              onEditRating={setEditRatingRecipe}
+              isSubmittingRating={isSubmittingRating}
               onDelete={deleteRecipe}
               deleteLabel="Eliminar receta"
-              deleteDescription="La receta se eliminará de tu historial y de favoritos."
+              deleteDescription="La receta se eliminará de tu historial."
               emptyTitle="Aún no hay recetas"
               emptyDescription="Añade ingredientes y pulsa «Generar receta con IA» para crear tu primera receta."
-            />
-          </TabsContent>
-
-          <TabsContent value="favorites">
-            <RecipeGrid
-              recipes={favorites}
-              isLoading={isCargandoRecetas}
-              onToggleFavorite={toggleFavorite}
-              onDelete={removeFavorite}
-              deleteLabel="Eliminar de favoritos"
-              deleteDescription="La receta dejará de aparecer en favoritos, pero seguirá en tus recetas generadas."
-              emptyTitle="No tienes favoritos"
-              emptyDescription="Marca con el corazón las recetas generadas que quieras guardar."
-              hideFavoriteToggle
             />
           </TabsContent>
         </Tabs>
@@ -309,6 +351,20 @@ function removeFavorite() {
         }}
         onSave={handleSaveDraft}
         isSaving={isSaving}
+      />
+
+      <EditRatingDialog
+        recipe={editRatingRecipe}
+        calificacion={
+          editRatingRecipe ? (ratings.get(editRatingRecipe.id) ?? null) : null
+        }
+        onOpenChange={(open) => {
+          if (!open) setEditRatingRecipe(null)
+        }}
+        onSubmit={async (values) => {
+          if (editRatingRecipe) await handleRate(editRatingRecipe.id, values)
+        }}
+        isSubmitting={isSubmittingRating}
       />
     </div>
   )

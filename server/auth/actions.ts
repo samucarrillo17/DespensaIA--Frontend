@@ -10,8 +10,14 @@ import {
 } from "@/server/lib/api-errors"
 import { apiClient } from "@/server/lib/api-client"
 import { AUTH_COOKIE } from "@/server/lib/auth"
-import { registerSchema, type RegisterFormValues } from "@/app/schemas/auth/register-schema"
-import { loginSchema, type LoginFormValues } from "@/app/schemas/auth/login-schema"
+import {
+  registerSchema,
+  type RegisterFormValues,
+} from "@/app/schemas/auth/register-schema"
+import {
+  loginSchema,
+  type LoginFormValues,
+} from "@/app/schemas/auth/login-schema"
 import type { AuthResponse } from "@/server/types"
 
 const RESOURCE_PATH = "auth"
