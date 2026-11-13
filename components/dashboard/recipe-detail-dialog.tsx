@@ -1,36 +1,35 @@
 "use client"
 
-import { ChefHat, Clock, Heart } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ChefHat, Clock, Star } from "lucide-react"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
+import type { CreateCalificacionFormValues } from "@/app/schemas/ratings/calificacion-schema"
 import type { Receta } from "@/server/types"
-import {
-  DIFICULTAD_ETIQUETAS,
-  formatIngredienteReceta,
-} from "./recipe-format"
+import { DIFICULTAD_ETIQUETAS, formatIngredienteReceta } from "./recipe-format"
+import { RatingForm } from "./rating-form"
 
 type RecipeDetailDialogProps = {
   recipe: Receta | null
   onOpenChange: (open: boolean) => void
-  onToggleFavorite: (id: string) => void
+  /** El usuario ya calificó esta receta: el diálogo solo muestra preparación. */
+  hasRating: boolean
+  /** Debe resolver con true si la calificación se guardó (para cerrar el diálogo). */
+  onRate: (values: CreateCalificacionFormValues) => Promise<boolean>
+  isSubmitting?: boolean
 }
 
 export function RecipeDetailDialog({
   recipe,
   onOpenChange,
-  onToggleFavorite,
+  hasRating,
+  onRate,
+  isSubmitting = false,
 }: RecipeDetailDialogProps) {
-  // Pendiente: el backend aún no expone «favorito»; el corazón se muestra inactivo hasta entonces.
-  const favorite = false
-
   return (
     <Dialog open={recipe !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
@@ -83,18 +82,23 @@ export function RecipeDetailDialog({
               </ol>
             </section>
 
-            <DialogFooter>
-              <Button
-                variant={favorite ? "outline" : "default"}
-                onClick={() => onToggleFavorite(recipe.id)}
-              >
-                <Heart
-                  className={cn(favorite && "fill-current text-primary")}
-                  aria-hidden="true"
+            {!hasRating && (
+              <section className="flex flex-col gap-2 rounded-xl border bg-muted/50 p-4">
+                <h3 className="flex items-center gap-2 font-medium">
+                  <Star
+                    className="size-4 fill-current text-amber-400"
+                    aria-hidden="true"
+                  />
+                  Califica esta receta
+                </h3>
+                <RatingForm
+                  idReceta={recipe.id}
+                  onSubmit={onRate}
+                  isSubmitting={isSubmitting}
+                  submitLabel="Enviar calificación"
                 />
-                {favorite ? "Quitar de favoritos" : "Guardar en favoritos"}
-              </Button>
-            </DialogFooter>
+              </section>
+            )}
           </>
         )}
       </DialogContent>

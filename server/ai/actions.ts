@@ -45,7 +45,8 @@ export async function generarReceta(
     if (!receta.success) {
       return {
         ok: false,
-        message: "La IA devolvió una receta con formato inválido. Inténtalo de nuevo",
+        message:
+          "La IA devolvió una receta con formato inválido. Inténtalo de nuevo",
       }
     }
     return actionSuccess(receta.data)

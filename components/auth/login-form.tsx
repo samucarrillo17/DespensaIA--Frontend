@@ -108,7 +108,11 @@ export function LoginForm({}: React.ComponentProps<"div">) {
               </Reveal>
               <Reveal from="bottom" duration={1000} delay={400}>
                 <Field>
-                  <Button type="submit" className="py-5" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    className="py-5"
+                    disabled={isSubmitting}
+                  >
                     Iniciar Sesion
                   </Button>
                 </Field>

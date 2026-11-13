@@ -11,10 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import type { CreateRecetaDto } from "@/server/types"
-import {
-  DIFICULTAD_ETIQUETAS,
-  formatIngredienteReceta,
-} from "./recipe-format"
+import { DIFICULTAD_ETIQUETAS, formatIngredienteReceta } from "./recipe-format"
 
 type GeneratedRecipeDialogProps = {
   recipe: CreateRecetaDto | null

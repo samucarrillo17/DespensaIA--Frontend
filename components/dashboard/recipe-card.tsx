@@ -1,6 +1,6 @@
 "use client"
 
-import { ChefHat, Clock, Eye, Heart, Trash2 } from "lucide-react"
+import { ChefHat, Clock, Eye, Star, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -23,32 +23,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { cn } from "@/lib/utils"
-import type { Receta } from "@/server/types"
+import type { Calificacion, Receta } from "@/server/types"
 import { DIFICULTAD_ETIQUETAS, formatIngredienteReceta } from "./recipe-format"
 
 type RecipeCardProps = {
   recipe: Receta
   onView: () => void
-  onToggleFavorite: () => void
+  /** Calificación del usuario para esta receta, si existe. */
+  rating?: Calificacion | null
+  /** Abrir el diálogo de edición de la calificación. */
+  onEditRating?: () => void
   onDelete: () => void
   deleteLabel: string
   deleteDescription: string
-  hideFavoriteToggle?: boolean
 }
 
 export function RecipeCard({
   recipe,
   onView,
-  onToggleFavorite,
+  rating,
+  onEditRating,
   onDelete,
   deleteLabel,
   deleteDescription,
-  hideFavoriteToggle,
 }: RecipeCardProps) {
-  // Pendiente: el backend aún no expone «favorito»; el corazón se muestra inactivo hasta entonces.
-  const favorite = false
-
   return (
     <Card className="flex h-full flex-col">
       <CardHeader>
@@ -58,23 +56,21 @@ export function RecipeCard({
         <CardDescription className="line-clamp-2">
           {recipe.descripcion}
         </CardDescription>
-        {!hideFavoriteToggle && (
+        {rating && onEditRating && (
           <CardAction>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onToggleFavorite}
-              aria-pressed={favorite}
-              className={cn(favorite && "text-primary hover:text-primary")}
+            <button
+              type="button"
+              title="Editar tu calificación"
+              aria-label="Editar tu calificación"
+              onClick={onEditRating}
+              className="flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 text-xs font-medium transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
-              <Heart
-                className={cn(favorite && "fill-current")}
+              <Star
+                className="size-3 fill-current text-amber-400"
                 aria-hidden="true"
               />
-              <span className="sr-only">
-                {favorite ? "Quitar de favoritos" : "Guardar en favoritos"}
-              </span>
-            </Button>
+              {rating.puntaje}
+            </button>
           </CardAction>
         )}
       </CardHeader>

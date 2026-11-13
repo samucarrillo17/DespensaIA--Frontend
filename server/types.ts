@@ -43,3 +43,18 @@ export type Receta = {
 
 export type CreateRecetaDto = Omit<Receta, "id" | "createdAt" | "deletedAt">
 export type UpdateRecetaDto = Partial<CreateRecetaDto>
+
+export type Calificacion = {
+  /** UUID v4. */
+  id: string
+  /** UUID de la receta calificada. */
+  recetaId: string
+  /** UUID del usuario que califica. */
+  usuarioId: string
+  /** Entero de 1 a 5. */
+  puntaje: number
+  /** Puede venir en null si el usuario nunca escribió un comentario. */
+  comentario: string | null
+  /** ISO 8601. */
+  createdAt: string
+}
